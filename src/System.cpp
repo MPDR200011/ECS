@@ -1,7 +1,7 @@
 #include "System.hpp"
 
-void BaseSystem::setAdmin(ECS* admin) {
-    this->admin = admin;
+void BaseSystem::setPool(ECSPool* pool) {
+    this->pool = pool;
 }
 
 void BaseSystem::setRequirements(std::set<uint32_t>& req) {

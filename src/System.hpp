@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ECS.hpp"
+#include "ECSPool.hpp"
 #include "Component.hpp"
 #include <set>
 
@@ -14,21 +14,25 @@ public:
 
     template <typename Component>
     void addRequirement() {
-        static_assert(std::is_base_of<ECSComponent<Component>, Component>::value, "Provided template argument must be derived of ECSComponent.");
+        VALID_COMP(Component);
         requiredComponents.insert(Component::ID);
     }
 
-    void setAdmin(ECS* admin);
+    void setPool(ECSPool* admin);
     void setRequirements(std::set<uint32_t>& req);
     void setRequirements(std::set<uint32_t>&& req);
 
-private:
+protected:
     template <typename Component>
-    std::vector<Component*> getComponents() {
-        static_assert(std::is_base_of<ECSComponent<Component>, Component>::value, "Provided template argument must be derived from ECSComponent");
-        return admin->query<Component>(requiredComponents);
-    }
+    std::vector<Component*> componentIterator();
 
-    ECS* admin;
+private:
+    ECSPool* pool;
     std::set<uint32_t> requiredComponents;
 };
+
+template <typename Component>
+std::vector<Component*> BaseSystem::componentIterator() {
+    VALID_COMP(Component);
+    return pool->query<Component>(requiredComponents);
+}

@@ -2,12 +2,16 @@
 
 #include <cstdint>
 #include <vector>
+#include <utility>
 #include <tuple>
+#include <unordered_map>
+#include "ComponentTypes.hpp"
+#include "Entity.hpp"
 
 struct BaseECSComponent;
 struct Entity;
 
-typedef size_t (*ECSComponentCreateFunction)(std::vector<uint8_t>& memory, Entity* ent, BaseECSComponent* comp);
+typedef std::pair<size_t, BaseECSComponent*> (*ECSComponentCreateFunction)(std::vector<BaseECSComponent*>& pool, Entity* ent, const BaseECSComponent* comp);
 typedef void (*ECSComponentFreeFunction)(BaseECSComponent* comp);
 
 struct BaseECSComponent {
@@ -40,20 +44,21 @@ struct ECSComponent : public BaseECSComponent {
     static const ECSComponentFreeFunction FREE_FUNC;
 
     template <typename Component>
-    Component* sibling() {
-        //FIXME implement
-    }
+    Component* sibling();
 };
 
-template <typename T>
-size_t ECSComponentCREATE(std::vector<uint8_t>& memory, Entity* ent, BaseECSComponent* comp) {
-    size_t index = memory.size();
-    memory.resize(index + T::SIZE);
+#define VALID_COMP(T) static_assert(std::is_base_of<ECSComponent<T>, T>::value, "Provided template argument must be derived from ECSComponent")
 
-    T* component = new(&memory[index])T(*(T*)comp);
+template <typename T>
+std::pair<size_t, BaseECSComponent*> ECSComponentCREATE(std::vector<BaseECSComponent*>& pool, Entity* ent, const BaseECSComponent* comp) {
+    size_t index = pool.size();
+
+    T* component = new T(*(T*)comp);
     component->entity = ent;
 
-    return index;
+    pool.push_back(component);
+
+    return std::make_pair(index, component);
 }
 
 template <typename T>
@@ -73,3 +78,10 @@ const ECSComponentCreateFunction ECSComponent<T>::CREATE_FUNC(ECSComponentCREATE
 
 template <typename T>
 const ECSComponentFreeFunction ECSComponent<T>::FREE_FUNC(ECSComponentFREE<T>);
+
+template <typename T>
+template <typename Component>
+Component* ECSComponent<T>::sibling() {
+    static_assert(std::is_base_of<ECSComponent<Component>, Component>::value, "Provided template argument must be derived from ECSComponent");
+    return (Component*) this->entity->components[Component::ID].second;
+}

@@ -1,7 +1,7 @@
-#include "ECS.hpp"
+#include "ECSPool.hpp"
 #include <cstring>
 
-ECS::~ECS() {
+ECSPool::~ECSPool() {
     for (auto it = components.begin(); it != components.end(); it++) {
         ECSComponentFreeFunction freefn = BaseECSComponent::getTypeFreeFunction(it->first);
         size_t componentSize = BaseECSComponent::getTypeSize(it->first);
@@ -16,7 +16,7 @@ ECS::~ECS() {
     }
 }
 
-EntityHandle ECS::createEntity() {
+EntityHandle ECSPool::createEntity() {
     size_t index = entities.size();
 
     Entity* entity = new Entity();
@@ -27,9 +27,9 @@ EntityHandle ECS::createEntity() {
     return entity;
 }
 
-void ECS::removeEntity(EntityHandle entity) {
+void ECSPool::removeEntity(EntityHandle entity) {
     for (auto &it: entity->components) {
-        deleteComponent(it.first, it.second);
+        deleteComponent(it.first, it.second.first);
     }
 
     size_t destIndex = entity->index;
@@ -45,25 +45,24 @@ void ECS::removeEntity(EntityHandle entity) {
     entities.pop_back();
 }
 
-void ECS::deleteComponent(uint32_t componentType, size_t index) {
-    std::vector<uint8_t>& memory = components[index];
+void ECSPool::deleteComponent(uint32_t componentType, size_t index) {
+    ComponentPool& pool = components[componentType];
 
     ECSComponentFreeFunction freefn = BaseECSComponent::getTypeFreeFunction(componentType);
-    size_t componentSize = BaseECSComponent::getTypeSize(componentType);
 
-    size_t srcIndex = memory.size() - componentSize; 
-    BaseECSComponent* srcComponent = (BaseECSComponent*) &memory[srcIndex];
-    BaseECSComponent* destComponnent = (BaseECSComponent*) &memory[index];
+    size_t srcIndex = pool.size() - 1; 
+    BaseECSComponent* srcComponent = pool[srcIndex];
+    BaseECSComponent* destComponnent = pool[index];
     freefn(destComponnent);
 
     if (index == srcIndex) {
-        memory.resize(srcIndex);
+        pool.pop_back();
         return;
     }
 
-    std::memcpy(destComponnent, srcComponent, componentSize);
+    pool[index] = srcComponent;
 
-    srcComponent->entity->components[componentType] = index;
+    srcComponent->entity->components[componentType].first = index;
 
-    memory.resize(srcIndex);
+    pool.pop_back();
 }

@@ -9,5 +9,5 @@ file(GLOB_RECURSE TEST_SRC src/*.cpp)
 add_executable(tests ${TEST_SRC})
 
 target_compile_options(tests
-    PUBLIC -std=c++17
+    PUBLIC -std=c++2a
 )

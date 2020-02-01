@@ -6,8 +6,8 @@ ECSPool::~ECSPool() {
         ECSComponentFreeFunction freefn = BaseECSComponent::getTypeFreeFunction(it->first);
         size_t componentSize = BaseECSComponent::getTypeSize(it->first);
 
-        for (size_t i = 0; i < it->second.size(); i += componentSize) {
-            freefn((BaseECSComponent*) &it->second[i]);
+        for (size_t i = 0; i < it->second.size(); i++) {
+            freefn(it->second[i]);
         }
     }
 

@@ -6,7 +6,6 @@
 #include <tuple>
 #include <unordered_map>
 #include "ComponentTypes.hpp"
-#include "Entity.hpp"
 
 struct BaseECSComponent;
 struct Entity;
@@ -15,25 +14,25 @@ typedef std::pair<size_t, BaseECSComponent*> (*ECSComponentCreateFunction)(std::
 typedef void (*ECSComponentFreeFunction)(BaseECSComponent* comp);
 
 struct BaseECSComponent {
+private:
+    static std::vector<std::tuple<ECSComponentCreateFunction, ECSComponentFreeFunction, size_t>>& getComponentTypes();
 public:
     static uint32_t registerComponentType(ECSComponentCreateFunction createfn, 
         ECSComponentFreeFunction freefn, size_t SIZE);
 
     inline static ECSComponentCreateFunction getTypeCreateFunction(uint32_t id) {
-        return std::get<0>(componentTypes[id]);
+        return std::get<0>(getComponentTypes()[id]);
     }
 
     inline static ECSComponentFreeFunction getTypeFreeFunction(uint32_t id) {
-        return std::get<1>(componentTypes[id]);
+        return std::get<1>(getComponentTypes()[id]);
     }
 
     inline static size_t getTypeSize (uint32_t id) {
-        return std::get<2>(componentTypes[id]);
+        return std::get<2>(getComponentTypes()[id]);
     }
 
     Entity* entity = nullptr;
-private:
-    static std::vector<std::tuple<ECSComponentCreateFunction, ECSComponentFreeFunction, size_t>> componentTypes;
 };
 
 template<typename T>
@@ -42,9 +41,6 @@ struct ECSComponent : public BaseECSComponent {
     static const size_t SIZE;
     static const ECSComponentCreateFunction CREATE_FUNC;
     static const ECSComponentFreeFunction FREE_FUNC;
-
-    template <typename Component>
-    Component* sibling();
 };
 
 #define VALID_COMP(T) static_assert(std::is_base_of<ECSComponent<T>, T>::value, "Provided template argument must be derived from ECSComponent")
@@ -78,10 +74,3 @@ const ECSComponentCreateFunction ECSComponent<T>::CREATE_FUNC(ECSComponentCREATE
 
 template <typename T>
 const ECSComponentFreeFunction ECSComponent<T>::FREE_FUNC(ECSComponentFREE<T>);
-
-template <typename T>
-template <typename Component>
-Component* ECSComponent<T>::sibling() {
-    static_assert(std::is_base_of<ECSComponent<Component>, Component>::value, "Provided template argument must be derived from ECSComponent");
-    return (Component*) this->entity->components[Component::ID].second;
-}

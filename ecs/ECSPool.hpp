@@ -18,10 +18,8 @@ public:
 
     void removeEntity(EntityHandle entityID);
 
-    template <typename Component>
+    template <Component Component>
     void addComponent(EntityHandle entity, const Component& comp) {
-        VALID_COMP(Component);
-
         ECSComponentCreateFunction createfn =
             BaseECSComponent::getTypeCreateFunction(Component::ID);
         ComponentPool& pool = components[Component::ID];
@@ -29,12 +27,8 @@ public:
         entity->components[Component::ID] = createfn(pool, entity, &comp);
     }
 
-    template <typename... Components>
+    template <Component... Components>
     EntityHandle createEntity(const Components&... comps) {
-        static_assert(
-            (std::is_base_of_v<ECSComponent<Components>, Components> && ...),
-            "Provided template argument must be derived from ECSComponent.");
-
         EntityHandle entity = createEntity();
 
         (addComponent(entity, comps), ...);
@@ -42,10 +36,8 @@ public:
         return entity;
     }
 
-    template <typename Component>
+    template <Component Component>
     bool removeComponent(EntityHandle entity) {
-        VALID_COMP(Component);
-
         auto search = entity->components.find(Component::ID);
         if (search != entity->components.end()) {
             deleteComponent(Component::ID, search->second.first);
@@ -54,10 +46,8 @@ public:
         return entity->components.erase(Component::ID) > 0;
     }
 
-    template <typename Component>
+    template <Component Component>
     Component* getComponent(EntityHandle entity) {
-        VALID_COMP(Component);
-
         auto search = entity->components.find(Component::ID);
         if (search != entity->components.end()) {
             return (Component*)search->second.second;
@@ -101,15 +91,13 @@ public:
         return res;
     }
 
-    template <typename Component>
+    template <Component Component>
     Component* getSingleton() {
-        VALID_COMP(Component);
         return (Component*)singletons.at(Component::ID);
     }
 
-    template <typename Component>
+    template <Component Component>
     Component* createSingleton(const Component& component) {
-        VALID_COMP(Component);
         if (singletons.count(Component::ID) > 0) {
             return (Component*)singletons[Component::ID];
         }
@@ -121,7 +109,7 @@ public:
         return (Component*)comp;
     }
 
-    template <typename Component>
+    template <Component Component>
     void removeSingleton() {
         singletons.erase(Component::ID);
     }

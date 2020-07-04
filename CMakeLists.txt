@@ -9,7 +9,7 @@ add_library(ECS
 )
 
 target_compile_options(ECS
-    PUBLIC -std=c++17
+    PUBLIC -std=c++2a
 )
 
 file(GLOB_RECURSE TEST_SRC tests-src/*.cpp)

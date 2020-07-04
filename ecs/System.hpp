@@ -15,9 +15,8 @@ public:
 
     virtual void tick(double timestep) = 0;
 
-    template <typename Component>
+    template <Component Component>
     void addRequirement() {
-        VALID_COMP(Component);
         requiredComponents.insert(Component::ID);
     }
 

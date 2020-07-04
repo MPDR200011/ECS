@@ -1,3 +1,5 @@
 .vscode/
 build/
 tests
+.clangd/
+compile_commands.json

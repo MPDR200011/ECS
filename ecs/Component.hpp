@@ -43,7 +43,8 @@ struct ECSComponent : public BaseECSComponent {
     static const ECSComponentFreeFunction FREE_FUNC;
 };
 
-#define VALID_COMP(T) static_assert(std::is_base_of<ECSComponent<T>, T>::value, "Provided template argument must be derived from ECSComponent")
+template<typename T>
+concept Component = std::is_base_of_v<ECSComponent<T>, T>;
 
 template <typename T>
 std::pair<size_t, BaseECSComponent*> ECSComponentCREATE(std::vector<BaseECSComponent*>& pool, Entity* ent, const BaseECSComponent* comp) {

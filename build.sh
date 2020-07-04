@@ -13,3 +13,5 @@ cd build
 cmake -DCMAKE_BUILD_TYPE="$BUILD_TYPE" ../
 make
 cd ..
+cp build/compile_commands.json .
+
